@@ -1,0 +1,82 @@
+{
+  "resourceType": "Bundle",
+  "type": "searchset",
+  "link": [
+    {
+      "relation": "self",
+      "url": "dev-ehr2fhir-system-api.cloudhub.io/api/Appointment?patient=Patient%2F3"
+    }
+  ],
+  "meta": {
+    "lastUpdated": "2016-09-08T11:32:22.511Z"
+  },
+  "total": 2,
+  "entry": [
+    {
+      "fullUrl": "http://dev-ehr2fhir-system-api.cloudhub.io/api/Appointment/1",
+      "resource": {
+        "resourceType": "Appointment",
+        "id": "1",
+        "description": "",
+        "start": "2013-12-25T10:00:00+00:00",
+        "end": "2013-12-25T10:30:00+00:00",
+        "minutesDuration": "",
+        "participant": [
+          {
+            "status": "accepted",
+            "actor": {
+              "reference": "Patient/3",
+              "display": ""
+            }
+          },
+          {
+            "status": "accepted",
+            "actor": {
+              "reference": "Practitioner/1",
+              "display": ""
+            }
+          }
+        ],
+        "status": "proposed",
+        "slot": [
+          {
+            "reference": "Slot/2"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://dev-ehr2fhir-system-api.cloudhub.io/api/Appointment/2",
+      "resource": {
+        "resourceType": "Appointment",
+        "id": "2",
+        "description": "",
+        "start": "2013-12-25T11:00:00+00:00",
+        "end": "2013-12-25T11:30:00+00:00",
+        "minutesDuration": "",
+        "participant": [
+          {
+            "status": "accepted",
+            "actor": {
+              "reference": "Patient/3",
+              "display": ""
+            }
+          },
+          {
+            "status": "accepted",
+            "actor": {
+              "reference": "Practitioner/1",
+              "display": ""
+            }
+          }
+        ],
+        "status": "proposed",
+        "slot": [
+          {
+            "reference": "Slot/4"
+          }
+        ]
+      }
+    }
+  ]
+}

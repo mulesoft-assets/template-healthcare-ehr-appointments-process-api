@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:context="http://www.springframework.org/schema/context" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+    <http:listener-config name="api-httpListenerConfig" host="0.0.0.0" port="${http.port}" doc:name="HTTP Listener Configuration"/>
+    <apikit:config name="api-config" raml="appointments-process-api.raml" consoleEnabled="false" doc:name="Router"/>
+    <http:request-config name="ehr-system-api" host="${ehr.host}" port="${ehr.port}" basePath="${ehr.basePath}" doc:name="HTTP Request Configuration">
+        <http:raml-api-configuration location="ehr-system-api/healthcare-system-api.raml"/>
+    </http:request-config>
+    <context:property-placeholder location="common.properties,mule.${mule.env}.properties"/>
+    <flow name="api-main">
+        <http:listener config-ref="api-httpListenerConfig" path="/api/*" doc:name="/api/*"/>
+        <apikit:router config-ref="api-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="api-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="api-console">
+        <http:listener config-ref="api-httpListenerConfig" path="/console/*" doc:name="/console/*"/>
+        <apikit:console config-ref="api-config" doc:name="APIkit Console"/>
+    </flow>
+    <flow name="get:/appointments:api-config">
+        <dw:transform-message doc:name="save query params to var params">
+            <dw:set-variable variableName="params"><![CDATA[%dw 1.0
+%output application/java
+---
+inboundProperties."http.query.params"]]></dw:set-variable>
+        </dw:transform-message>
+        <http:request config-ref="ehr-system-api" path="/Appointment" method="GET" doc:name="Search Appointments">
+            <http:request-builder>
+                <http:query-param paramName="patient" value="#[(flowVars.params.patientId != null ) ? &quot;Patient/&quot; + flowVars.params.patientId : &quot;&quot; ]"/>
+                <http:query-param paramName="practitioner" value="#[(flowVars.params.practitionerId != null ) ? &quot;Patient/&quot; + flowVars.params.practitionerId : &quot;&quot; ]"/>
+            </http:request-builder>
+        </http:request>
+        <dw:transform-message doc:name="to array of appointments">
+            <dw:input-payload doc:sample="sample_data\json.json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload.entry.resource map 
+{
+	id: $.id as :number,
+	startDateTime: $.start,
+	endDateTime: $.end,
+	status: $.status,
+	practitioner: using (practitioner = ($.participant filter ($.actor.reference startsWith "Practitioner"))[0])
+	{
+		id: (practitioner.actor.reference splitBy "/")[-1] as :number,
+		name: practitioner.actor.display	
+	},
+	patient: using (patient = ($.participant filter ($.actor.reference startsWith "Patient"))[0])
+	{
+		id: (patient.actor.reference splitBy "/")[-1] as :number,
+		name: patient.actor.display
+	},
+	description: $.description
+} when payload.total > 0 otherwise []]]></dw:set-payload>
+        </dw:transform-message>
+        <dw:transform-message doc:name="filter after">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload filter ($.startDateTime as :datetime > flowVars.params.startAfter as :datetime) 
+when ( (not (payload is :empty)) and flowVars.params.startAfter != null)
+otherwise payload]]></dw:set-payload>
+        </dw:transform-message>
+        <dw:transform-message doc:name="filter before">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload filter ($.startDateTime as :datetime < flowVars.params.startBefore as :datetime) 
+when ( (not (payload is :empty)) and  flowVars.params.startBefore != null )
+otherwise payload]]></dw:set-payload>
+        </dw:transform-message>
+
+    </flow>
+    <flow name="get:/slots:api-config">
+
+        <http:request config-ref="ehr-system-api" path="/Practitioner/{id}/Schedule" method="GET" doc:name="GET Schedule for Practitioner">
+            <http:request-builder>
+                <http:uri-param paramName="id" value="#[message.inboundProperties.'http.query.params'.practitionerId]"/>
+            </http:request-builder>
+        </http:request>
+        <dw:transform-message doc:name="extract Schedule id">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	scheduleId: payload.entry.resource[0].id
+	
+	
+} when payload.total > 0 otherwise null]]></dw:set-payload>
+        </dw:transform-message>
+        <choice doc:name="Does schedule / practitioner exist?">
+            <when expression="#[payload != null]">
+                <http:request config-ref="ehr-system-api" path="/Slot" method="GET" doc:name="GET Slots for given schedule">
+                    <http:request-builder>
+                        <http:query-param paramName="schedule" value="Schedule/#[payload.scheduleId]"/>
+                    </http:request-builder>
+                </http:request>
+                <dw:transform-message doc:name="to list of slots">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+(payload.entry filter (($.resource.freeBusyType == "free") and ($.resource.start as :datetime) > now)) 
+map 
+using (slot = $.resource)
+{
+	slotId : slot.id as :number,
+	startDateTime: slot.start,
+	endDateTime: slot.end,
+	freeBusyType: slot.freeBusyType,
+	scheduleId: (slot.schedule.reference splitBy "/")[-1] as :number
+} when payload.total > 0 otherwise []]]></dw:set-payload>
+                </dw:transform-message>
+            </when>
+            <otherwise>
+                <dw:transform-message doc:name="Practitioner not found">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	message: "Practitioner not found"
+}]]></dw:set-payload>
+                    <dw:set-property propertyName="http.status"><![CDATA[%dw 1.0
+%output application/java
+---
+404]]></dw:set-property>
+                </dw:transform-message>
+            </otherwise>
+        </choice>
+
+    </flow>
+    <flow name="post:/appointments:application/json:api-config">
+        <set-property propertyName="Content-Type" value="application/json" doc:name="application/json"/>
+        <dw:transform-message doc:name="save body to var input">
+            <dw:set-variable variableName="input"><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	patientId: payload.patientId,
+	practitionerId: payload.practitionerId,
+	slotId: payload.slotId
+}]]></dw:set-variable>
+        </dw:transform-message>
+
+        <flow-ref name="retrieveAppointmentRelatedData" doc:name="retrieveAppointmentRelatedData"/>
+        <validation:all doc:name="Validation">
+            <validation:validations>
+                <validation:is-not-null value="#[flowVars.slot]" message="Slot was not found"/>
+                <validation:is-not-null value="#[flowVars.practitioner]" message="Practitioner was not found."/>
+                <validation:is-not-null value="#[flowVars.patient]" message="Patient was not found"/>
+                <validation:is-true expression="#[flowVars.slot.freeBusyType == &quot;free&quot;]" message="Slot is not marked as available"/>
+
+            </validation:validations>
+        </validation:all>
+        <dw:transform-message doc:name="prepare request to create appointment">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+    "resourceType": "Appointment",
+    "status": "booked",
+    "description": "",
+    "start": flowVars.slot.start,
+    "end": flowVars.slot.end,
+    "slot": [{
+      "reference": "Slot/" ++ flowVars.slot.id
+    }],
+    "participant": [
+      {
+        "actor": {
+          "reference": "Patient/" ++ flowVars.patient.id,
+          "display": flowVars.patient.name
+        },
+        "required": "required",
+        "status": "needs-action"
+      },
+      {
+        "actor": {
+          "reference": "Practitioner/" ++ flowVars.practitioner.id,
+          "display": flowVars.practitioner.name
+        },
+        "required": "required",
+        "status": "needs-action"
+      }
+    ]
+  }]]></dw:set-payload>
+        </dw:transform-message>
+        <http:request config-ref="ehr-system-api" path="/Appointment" method="POST" doc:name="POST Appointment"/>
+        <dw:transform-message doc:name="prepare slot update request">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+    "resourceType": "Slot",
+    "schedule": {
+        "reference": flowVars.slot.schedule.reference
+    },
+    "start": flowVars.slot.start,
+    "end": flowVars.slot.end,
+    "freeBusyType": "busy"
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <http:request config-ref="ehr-system-api" path="/Slot/{id}" method="PUT" doc:name="PUT Slot">
+            <http:request-builder>
+                <http:uri-param paramName="id" value="#[flowVars.input.slotId]"/>
+
+            </http:request-builder>
+        </http:request>
+
+    </flow>
+    <sub-flow name="retrieveAppointmentRelatedData">
+        <enricher source="#[payload == null ? null : payload]" target="#[flowVars.practitioner]" doc:name="save to var practitioner">
+            <processor-chain doc:name="Processor Chain">
+                <http:request config-ref="ehr-system-api" path="/Practitioner/{id}" method="GET" doc:name="GET Practitioner">
+                    <http:request-builder>
+                        <http:uri-param paramName="id" value="#[flowVars.input.practitionerId]"/>
+                    </http:request-builder>
+                    <http:success-status-code-validator values="200,404"/>
+                </http:request>
+
+                <dw:transform-message doc:name="extract practitioner data" metadata:id="80b52e88-11fb-4cdf-9191-c394c1b1fdbd">
+                    <dw:input-payload mimeType="application/json"/>
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+null when inboundProperties.'http.status' != 200 otherwise 
+{
+	id : payload.id,
+	name : payload.name[0].given[0] ++ ' ' ++ payload.name[0].family[0] ++ ( ', ' ++ payload.name[0].suffix[0] default null)
+}]]></dw:set-payload>
+                </dw:transform-message>
+            </processor-chain>
+        </enricher>
+        <enricher source="#[payload == null ? null : payload]" target="#[flowVars.patient]" doc:name="save to var patient">
+            <processor-chain doc:name="Processor Chain">
+                <http:request config-ref="ehr-system-api" path="/Patient/{id}" method="GET" doc:name="GET Patient">
+                    <http:request-builder>
+                        <http:uri-param paramName="id" value="#[flowVars.input.patientId]"/>
+
+                    </http:request-builder>
+                    <http:success-status-code-validator values="200,404"/>
+                </http:request>
+                <dw:transform-message doc:name="extract patient data">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+null when (inboundProperties.'http.status' != 200)  otherwise 
+{
+	id : payload.id,
+	name : payload.name[0].given[0] ++ ' ' ++ payload.name[0].family[0]
+}]]></dw:set-payload>
+                </dw:transform-message>
+            </processor-chain>
+        </enricher>
+        <enricher source="#[payload == null ? null : payload]" target="#[flowVars.slot]" doc:name="save to var slot">
+            <processor-chain doc:name="Processor Chain">
+                <http:request config-ref="ehr-system-api" path="/Slot/{id}" method="GET" doc:name="GET Slot">
+                    <http:request-builder>
+                        <http:uri-param paramName="id" value="#[flowVars.input.slotId]"/>
+
+                    </http:request-builder>
+                    <http:success-status-code-validator values="200,404"/>
+                </http:request>
+                <dw:transform-message doc:name="extract slot data">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+null when inboundProperties.'http.status' != 200 otherwise 
+{
+    "id": payload.id,
+    "schedule": {
+        "reference": payload.schedule.reference
+    },
+    "start": payload.start,
+    "end": payload.end,
+    "freeBusyType": payload.freeBusyType
+}]]></dw:set-payload>
+                </dw:transform-message>
+            </processor-chain>
+        </enricher>
+    </sub-flow>
+
+    <apikit:mapping-exception-strategy name="api-apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Not Found"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Method not allowed"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Unsupported media type"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Not acceptable"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Bad request"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="422">
+            <apikit:exception value="org.mule.extension.validation.api.MultipleValidationException"/>
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;#[exception.getMessage()]&quot; }" doc:name="Unprocessable entity"/>
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+
+</mule>

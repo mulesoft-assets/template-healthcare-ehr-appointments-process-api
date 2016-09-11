@@ -1,0 +1,74 @@
+#%RAML 1.0
+title: template-healthcare-ehr-appointments-process-api
+version: v1
+baseUri: http://portal-ehr-appointments-process-api.cloudhub.io/api
+
+
+types:
+  
+  Appointment:
+    type: object
+    properties: 
+      id: string
+      start: datetime
+      end: datetime
+      actor: string
+      status: 
+        enum: [accepted, declined, tentative, needs-action]
+
+  AppointmentBooking:
+    type: object
+    properties:
+      patientId: string
+      practitionerId: string
+      slotId: string
+      
+  
+  
+/slots:
+  get:
+    queryParameters:
+      practitionerId:
+        required: true
+    responses:
+      200:
+        body:
+          application/json:
+            
+        
+/appointments:
+  get:
+    queryParameters:
+      practitionerId:
+        required: false
+      patientId:
+        required: false
+    responses:
+      200:
+        body:
+          application/json:
+            type: Appointment[]
+            
+  post:
+    body:
+      application/json:
+        type: AppointmentBooking
+    responses:
+      201:
+        body:
+          application/json:
+    
+        
+#   {
+#    "start": "Mon 06/20/16 at 1:00 PM",
+#    "end": "Mon 06/20/16 at 2:00 PM",
+#    "actor": "Dr. John Smith",
+#    "status": "fulfilled"
+#  }
+  
+#{
+#  "practitionerID" : "11",
+#  "scheduleID": "2",
+#  "slotID" : "5"
+#}
+  
