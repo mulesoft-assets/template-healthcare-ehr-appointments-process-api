@@ -16,6 +16,7 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
     <context:property-placeholder location="common.properties,mule.${mule.env}.properties"/>
     <flow name="api-main">
         <http:listener config-ref="api-httpListenerConfig" path="/api/*" doc:name="/api/*"/>
+        <logger message="#[message.inboundProperties.'http.method'] #[message.inboundProperties.'http.request.uri' + message.inboundProperties.'http.query.string'] #[&quot;\n&quot; + message.payloadAs(java.lang.String)]" level="INFO" doc:name="Lo request"/>
         <apikit:router config-ref="api-config" doc:name="APIkit Router"/>
         <exception-strategy ref="api-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
     </flow>
@@ -155,6 +156,7 @@ using (slot = $.resource)
                 <validation:is-not-null value="#[flowVars.practitioner]" message="Practitioner was not found."/>
                 <validation:is-not-null value="#[flowVars.patient]" message="Patient was not found"/>
                 <validation:is-true expression="#[flowVars.slot.freeBusyType == &quot;free&quot;]" message="Slot is not marked as available"/>
+                <validation:is-true expression="#[dw('  flowVars.slot.start as :datetime &gt; now  ')]" message="Cannot book an appointment in the past"/>
 
             </validation:validations>
         </validation:all>
