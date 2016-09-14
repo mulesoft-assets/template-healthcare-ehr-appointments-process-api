@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:context="http://www.springframework.org/schema/context" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" 
+	xmlns:json="http://www.mulesoft.org/schema/mule/json" 
+	xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" 
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation" 
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" 
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" 
+	xmlns="http://www.mulesoft.org/schema/mule/core" 
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" 
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" 
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
@@ -8,15 +20,18 @@ http://www.springframework.org/schema/context http://www.springframework.org/sch
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+    
     <http:listener-config name="api-httpListenerConfig" host="0.0.0.0" port="${http.port}" doc:name="HTTP Listener Configuration"/>
     <apikit:config name="api-config" raml="appointments-process-api.raml" consoleEnabled="false" doc:name="Router"/>
     <http:request-config name="ehr-system-api" host="${ehr.host}" port="${ehr.port}" basePath="${ehr.basePath}" doc:name="HTTP Request Configuration">
         <http:raml-api-configuration location="ehr-system-api/healthcare-system-api.raml"/>
     </http:request-config>
     <context:property-placeholder location="common.properties,mule.${mule.env}.properties"/>
+    
+    
     <flow name="api-main">
         <http:listener config-ref="api-httpListenerConfig" path="/api/*" doc:name="/api/*"/>
-        <logger message="#[message.inboundProperties.'http.method'] #[message.inboundProperties.'http.request.uri' + message.inboundProperties.'http.query.string'] #[&quot;\n&quot; + message.payloadAs(java.lang.String)]" level="INFO" doc:name="Lo request"/>
+        <logger message="#[message.inboundProperties.'http.method'] #[message.inboundProperties.'http.request.uri' + message.inboundProperties.'http.query.string'] #[&quot;\n&quot; + message.payloadAs(java.lang.String)]" level="INFO" doc:name="Log request"/>
         <apikit:router config-ref="api-config" doc:name="APIkit Router"/>
         <exception-strategy ref="api-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
     </flow>
@@ -24,6 +39,9 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
         <http:listener config-ref="api-httpListenerConfig" path="/console/*" doc:name="/console/*"/>
         <apikit:console config-ref="api-config" doc:name="APIkit Console"/>
     </flow>
+    
+    
+    
     <flow name="get:/appointments:api-config">
         <dw:transform-message doc:name="save query params to var params">
             <dw:set-variable variableName="params"><![CDATA[%dw 1.0
@@ -77,10 +95,11 @@ payload filter ($.startDateTime as :datetime < flowVars.params.startBefore as :d
 when ( (not (payload is :empty)) and  flowVars.params.startBefore != null )
 otherwise payload]]></dw:set-payload>
         </dw:transform-message>
-
     </flow>
+    
+    
+    
     <flow name="get:/slots:api-config">
-
         <http:request config-ref="ehr-system-api" path="/Practitioner/{id}/Schedule" method="GET" doc:name="GET Schedule for Practitioner">
             <http:request-builder>
                 <http:uri-param paramName="id" value="#[message.inboundProperties.'http.query.params'.practitionerId]"/>
@@ -120,7 +139,7 @@ using (slot = $.resource)
                 </dw:transform-message>
             </when>
             <otherwise>
-                <dw:transform-message doc:name="Practitioner not found">
+                <dw:transform-message doc:name="practitioner not found">
                     <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
 ---
@@ -136,6 +155,10 @@ using (slot = $.resource)
         </choice>
 
     </flow>
+    
+    
+    
+    
     <flow name="post:/appointments:application/json:api-config">
         <set-property propertyName="Content-Type" value="application/json" doc:name="application/json"/>
         <dw:transform-message doc:name="save body to var input">
@@ -214,8 +237,10 @@ using (slot = $.resource)
 
             </http:request-builder>
         </http:request>
-
     </flow>
+    
+    
+    
     <sub-flow name="retrieveAppointmentRelatedData">
         <enricher source="#[payload == null ? null : payload]" target="#[flowVars.practitioner]" doc:name="save to var practitioner">
             <processor-chain doc:name="Processor Chain">

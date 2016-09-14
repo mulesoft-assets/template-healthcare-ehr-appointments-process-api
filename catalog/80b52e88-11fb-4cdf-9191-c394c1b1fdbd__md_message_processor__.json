@@ -1,0 +1,11 @@
+{
+    "inputMessageMetadata": {
+        "messagePayload": {
+            "connectorName": "ehr-system-api",
+            "typeId": "GET:/Practitioner/{id}_response"
+        }
+    },
+    "outputMessageMetadata": {},
+    "id": "80b52e88-11fb-4cdf-9191-c394c1b1fdbd",
+    "version": "5.2.0.0"
+}
