@@ -1,0 +1,32 @@
+{
+  "resourceType": "Bundle",
+  "type": "searchset",
+  "link": [
+    {
+      "relation": "self",
+      "url": "dev-ehr2fhir-system-api.cloudhub.io/api/Practitioner/1/Schedule"
+    }
+  ],
+  "meta": {
+    "lastUpdated": "2016-12-07T12:43:02.348Z"
+  },
+  "total": 1,
+  "entry": [
+    {
+      "fullUrl": "http://dev-ehr2fhir-system-api.cloudhub.io/api/Schedule/1",
+      "resource": {
+        "resourceType": "Schedule",
+        "id": "1",
+        "comment": "",
+        "planningHorizon": {
+          "start": "",
+          "end": ""
+        },
+        "actor": {
+          "display": "Jamie Fletcher, MD",
+          "reference": "Practitioner/1"
+        }
+      }
+    }
+  ]
+}

@@ -22,19 +22,24 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
     
     <http:listener-config name="api-httpListenerConfig" host="0.0.0.0" port="${http.port}" doc:name="HTTP Listener Configuration"/>
+   
     <apikit:config name="api-config" raml="appointments-process-api.raml" consoleEnabled="false" doc:name="Router"/>
-    <http:request-config name="ehr-system-api" host="${ehr.host}" port="${ehr.port}" basePath="${ehr.basePath}" doc:name="HTTP Request Configuration">
+    
+    <http:request-config protocol="HTTP"  name="ehr-system-api" port="${ehr.port}" basePath="${ehr.basePath}" doc:name="HTTP Request Configuration" host="${ehr.host}">
         <http:raml-api-configuration location="ehr-system-api/healthcare-system-api.raml"/>
+
     </http:request-config>
+    
     <context:property-placeholder location="common.properties,mule.${mule.env}.properties"/>
     
     
     <flow name="api-main">
         <http:listener config-ref="api-httpListenerConfig" path="/api/*" doc:name="/api/*"/>
-        <logger message="#[message.inboundProperties.'http.method'] #[message.inboundProperties.'http.request.uri' + message.inboundProperties.'http.query.string'] #[&quot;\n&quot; + message.payloadAs(java.lang.String)]" level="INFO" doc:name="Log request"/>
+        <logger message="#[message.inboundProperties.'http.method'] #[message.inboundProperties.'http.request.uri'] #[&quot;\n&quot; + message.payloadAs(java.lang.String)]" level="INFO" doc:name="Log request"/>
         <apikit:router config-ref="api-config" doc:name="APIkit Router"/>
         <exception-strategy ref="api-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
     </flow>
+   
     <flow name="api-console">
         <http:listener config-ref="api-httpListenerConfig" path="/console/*" doc:name="/console/*"/>
         <apikit:console config-ref="api-config" doc:name="APIkit Console"/>

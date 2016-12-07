@@ -1,0 +1,42 @@
+{
+  "resourceType": "Bundle",
+  "type": "searchset",
+  "total": 2,
+  "meta": {
+    "lastUpdated": "2016-12-06T14:08:37.411Z"
+  },
+  "link": [
+    {
+      "relation": "self",
+      "url": "http://dev-ehr2fhir-system-api.cloudhub.io/api/Slot?schedule=Schedule%2F1"
+    }
+  ],
+  "entry": [
+    {
+      "fullUrl": "http://dev-ehr2fhir-system-api.cloudhub.io/api/Slot/6",
+      "resource": {
+        "resourceType": "Slot",
+        "id": "6",
+        "schedule": {
+          "reference": "Schedule/1"
+        },
+        "start": "2013-12-25T15:00:00+00:00",
+        "end": "2013-12-25T15:30:00+00:00",
+        "freeBusyType": "free"
+      }
+    },
+    {
+      "fullUrl": "http://dev-ehr2fhir-system-api.cloudhub.io/api/Slot/7",
+      "resource": {
+        "resourceType": "Slot",
+        "id": "7",
+        "schedule": {
+          "reference": "Schedule/1"
+        },
+        "start": "2013-12-25T15:30:00+00:00",
+        "end": "2013-12-25T16:00:00+00:00",
+        "freeBusyType": "free"
+      }
+    }
+  ]
+}

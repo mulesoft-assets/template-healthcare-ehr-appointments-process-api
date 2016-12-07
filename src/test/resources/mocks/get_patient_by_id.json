@@ -1,0 +1,40 @@
+{
+  "resourceType": "Patient",
+  "id": "13248410",
+  "address": [
+    {
+      "city": "San Francisco",
+      "country": "USA",
+      "line": [
+        "946 Stockton Street"
+      ],
+      "postalCode": "94108",
+      "state": "California"
+    }
+  ],
+  "birthDate": "2016-11-02",
+  "careProvider": [
+    {
+      "reference": "Practitioner/1"
+    }
+  ],
+  "gender": "male",
+  "name": [
+    {
+      "use": "official",
+      "family": [
+        "Doe"
+      ],
+      "given": [
+        "John"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "use": "home",
+      "value": "941081231"
+    }
+  ]
+}

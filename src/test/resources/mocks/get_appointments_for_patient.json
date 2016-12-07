@@ -1,0 +1,48 @@
+{
+  "resourceType": "Bundle",
+  "type": "searchset",
+  "link": [
+    {
+      "relation": "self",
+      "url": "http://dev-ehr2fhir-system-api.cloudhub.io/api/Appointment?patient=Patient%2F13248410"
+    }
+  ],
+  "meta": {
+    "lastUpdated": "2016-12-06T13:19:40.714Z"
+  },
+  "total": 1,
+  "entry": [
+    {
+      "fullUrl": "http://dev-ehr2fhir-system-api.cloudhub.io/api/Appointment/10",
+      "resource": {
+        "resourceType": "Appointment",
+        "id": "10",
+        "description": "Appointment with David Chao, MD",
+        "start": "2016-11-22T01:00:00+00:00",
+        "end": "2016-11-22T01:30:00+00:00",
+        "participant": [
+          {
+            "status": "accepted",
+            "actor": {
+              "reference": "Patient/13248410",
+              "display": "John Doe"
+            }
+          },
+          {
+            "status": "accepted",
+            "actor": {
+              "reference": "Practitioner/2",
+              "display": "David Chao, MD"
+            }
+          }
+        ],
+        "status": "booked",
+        "slot": [
+          {
+            "reference": "Slot/822"
+          }
+        ]
+      }
+    }
+  ]
+}
