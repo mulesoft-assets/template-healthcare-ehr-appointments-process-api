@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd ">
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd ">
 
     <apikit:config name="healthcare_appointment_process_api-config" raml="healthcare_appointment_process_api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <flow name="healthcare_appointment_process_api-main">
@@ -122,102 +122,12 @@ output application/json
         </error-handler>
     </flow>
     <flow name="get:\appointments:healthcare_appointment_process_api-config">
-        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-[
-  {
-    id: "3",
-    description: "Regular Check-up",
-    start: "2016-10-28T14:30:00-08:00",
-    end: "2016-10-28T15:00:00-08:00",
-    participant: [
-      {
-        status: "accepted",
-        actor: {
-          reference: "Patient/9",
-          display: "Andreas Anderson"
-        }
-      }, 
-      {
-        status: "needs-action",
-        actor: {
-          reference: "Practitioner/1",
-          display: "Jamie Fletcher, MD"
-        }
-      }
-    ],
-    status: "proposed",
-    slot: [
-      {
-        reference: "Slot/15"
-      }
-    ]
-  }, 
-  {
-    id: "4",
-    description: "",
-    start: "2016-10-28T15:00:00+00:00",
-    end: "2016-10-28T15:30:00+00:00",
-    participant: [
-      {
-        status: "accepted",
-        actor: {
-          reference: "Patient/9",
-          display: "Andreas Anderson"
-        }
-      }, 
-      {
-        status: "accepted",
-        actor: {
-          reference: "Practitioner/1",
-          display: "Jamie Fletcher, MD"
-        }
-      }
-    ],
-    status: "booked",
-    slot: [
-      {
-        reference: "Slot/16"
-      }
-    ]
-  }
-]]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="e7628755-d6db-4b36-b94d-efd58162e16c" name="getAppointmentsFlow"/>
     </flow>
     <flow name="get:\slots:healthcare_appointment_process_api-config">
-        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-[
-  {
-    id: "6",
-    schedule: {
-      reference: "Schedule/1"
-    },
-    start: "2013-12-25T15:00:00+00:00",
-    end: "2013-12-25T15:30:00+00:00",
-    status: "free"
-  }, 
-  {
-    id: "7",
-    schedule: {
-      reference: "Schedule/1"
-    },
-    start: "2013-12-25T15:30:00+00:00",
-    end: "2013-12-25T16:00:00+00:00",
-    status: "free"
-  }
-]]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="7dbe6af3-4b30-4226-88a4-d5a0491be8fd" name="getSlotsFlow"/>
     </flow>
     <flow name="post:\appointments:application\json:healthcare_appointment_process_api-config">
-        <logger level="INFO" message="post:\appointments:application\json:healthcare_appointment_process_api-config" />
+		<flow-ref doc:name="Flow Reference" doc:id="6edf9cbd-aeb4-4e4e-bf82-37fb9cd42545" name="postAppointmentsFlow"/>
     </flow>
 </mule>
