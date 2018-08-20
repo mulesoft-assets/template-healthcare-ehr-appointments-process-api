@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
 	<flow name="getAppointmentsFlow" doc:id="76c8ff43-acf4-4e5e-8140-0cd5c85efc97" >
-		<logger level="INFO" doc:name="Logger" doc:id="c684a9e2-73ef-4ca7-88de-d6b5e22465e6" message="getAppointmentsFlow payload=#[payload]"/>
-		<http:request method="GET" doc:name="Request" doc:id="73428683-0238-4dea-92f1-80ba610232c1" config-ref="HTTP_ehr_system_request_configuration" path="/Appointment">
+		<http:request method="GET" doc:name="GET Appointment" doc:id="73428683-0238-4dea-92f1-80ba610232c1" config-ref="HTTP_ehr_system_request_configuration" path="/Appointment">
 			<http:query-params ><![CDATA[#[output applicaton/java
 ---
 {
@@ -15,9 +15,9 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
     "practitioner" : #[attributes.queryParams.practitionerId != null  ? "Patient/" + attributes.queryParams.practitionerId : "" ]
 }]]]></http:query-params>
 		</http:request>
-		<ee:transform doc:name="Transform Message" doc:id="925e5738-8b05-4f09-b1db-ce301036e934" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+		<ee:transform doc:name="Process appointment data" doc:id="925e5738-8b05-4f09-b1db-ce301036e934">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
 if (payload.total > 0)
@@ -41,9 +41,9 @@ payload.entry.resource map
 } else []]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<ee:transform doc:name="Transform Message" doc:id="3a9b3406-e7d3-47cc-b3f5-df51b1e475d5" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+		<ee:transform doc:name="filter after" doc:id="3a9b3406-e7d3-47cc-b3f5-df51b1e475d5">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
 if ( (not (isEmpty(payload))) and attributes.queryParams.startAfter != null)
@@ -51,7 +51,7 @@ payload filter ($.startDateTime as DateTime > attributes.queryParams.startAfter 
 else payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<ee:transform doc:name="Transform Message" doc:id="8502162b-82da-423a-824f-566b362c77bb" >
+		<ee:transform doc:name="filter before" doc:id="8502162b-82da-423a-824f-566b362c77bb" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
@@ -63,8 +63,7 @@ else payload]]></ee:set-payload>
 		</ee:transform>
 	</flow>
 	<flow name="postAppointmentsFlow" doc:id="d39044e1-5253-4a6e-9ff0-5a9c16e878b8" >
-		<logger level="INFO" doc:name="Logger" doc:id="5595583d-974b-4411-a8f0-52f857f477b5" message="postAppointmentsFlow payload=#[payload]"/>
-		<ee:transform doc:name="save POST body to variable myInput" doc:id="bfc5b64e-56e0-4add-8102-82fdbfe50832">
+		<ee:transform doc:name="Save POST body to variable myInput" doc:id="bfc5b64e-56e0-4add-8102-82fdbfe50832">
 			<ee:message>
 			</ee:message>
 			<ee:variables >
@@ -79,26 +78,66 @@ output application/java
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Call retrieveAppointmentRelatedData" doc:id="49c1b13d-3327-4012-832f-28df386683a6" name="retrieveAppointmentRelatedData"/>
-		<ee:transform doc:name="prepare request to create appointment" doc:id="62dd18d6-9e83-457e-b7ef-f583cbc5eb91" >
+		<flow-ref doc:name="Validate data" doc:id="7a7cd28d-7e32-4470-bc66-dcaaad63a8e5" name="validationFlow"/>
+		<ee:transform doc:name="Prepare request to create appointment" doc:id="62dd18d6-9e83-457e-b7ef-f583cbc5eb91" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
+output application/json
 ---
 {
-}]]></ee:set-payload>
+    "resourceType": "Appointment",
+    "status": "booked",
+    "description": "",
+    "start": vars.slot.start,
+    "end": vars.slot.end,
+    "slot": [{
+      "reference": "Slot/" ++ (vars.slot.id default "")
+    }],
+    "participant": [
+      {
+        "actor": {
+          "reference": "Patient/" ++ (vars.patient.id default ""),
+          "display": vars.patient.name
+        },
+        "required": "required",
+        "status": "needs-action"
+      },
+      {
+        "actor": {
+          "reference": "Practitioner/" ++ (vars.practitioner.id default ""),
+          "display": vars.practitioner.name
+        },
+        "required": "required",
+        "status": "needs-action"
+      }
+    ]
+  }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<http:request method="POST" doc:name="POST Appointment" doc:id="12a1ac85-de7c-48eb-a25a-348b32a7cf50" config-ref="HTTP_ehr_system_request_configuration" path="/Appointment"/>
-		<ee:transform doc:name="prepare slot update request" doc:id="81f39412-b6a7-4eef-bff1-30c6b282ab8f" >
+		<ee:transform doc:name="Prepare slot update request" doc:id="81f39412-b6a7-4eef-bff1-30c6b282ab8f" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
+output application/json
 ---
 {
+    "resourceType": "Slot",
+    "schedule": {
+        "reference": vars.slot.schedule.reference
+    },
+    "start": vars.slot.start,
+    "end": vars.slot.end,
+    "status": "busy"
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<http:request method="PUT" doc:name="PUT Slot" doc:id="57d3605b-9051-4990-b853-345acf5d24f5" config-ref="HTTP_ehr_system_request_configuration" path="/Slot"/>
+		<http:request method="PUT" doc:name="PUT Slot" doc:id="57d3605b-9051-4990-b853-345acf5d24f5" config-ref="HTTP_ehr_system_request_configuration" path="/Slot/{id}">
+            <http:uri-params ><![CDATA[#[output applicaton/java
+---
+{
+	id : vars.myInput.slotId
+}]]]></http:uri-params>        
+        </http:request>
 	</flow>
 	<sub-flow name="retrieveAppointmentRelatedData" doc:id="6a97c38a-82db-4e81-bc3e-ec93c0afd020" >
 		<http:request method="GET" doc:name="GET Practitioner" doc:id="1b9fffe1-354e-4df6-afcd-bf26fde23606" config-ref="HTTP_ehr_system_request_configuration" path="/Practitioner/{id}" target="temp">
@@ -108,7 +147,6 @@ output application/java
 	id : vars.myInput.practitionerId
 }]]]></http:uri-params>
         </http:request>
-		<logger level="INFO" doc:name="Log temp" doc:id="c0b36f66-d234-4974-badf-5646454754f1" message="practitioner temp=#[output application/json --- vars.temp]"/>
 		<ee:transform doc:name="Extract practitioner data" doc:id="7e87a016-6e90-4ff1-b6d3-99aba0a94508" >
 			<ee:message >
 			</ee:message>
@@ -130,7 +168,6 @@ output application/java
 	id : vars.myInput.patientId
 }]]]></http:uri-params>
         </http:request>
-		<logger level="INFO" doc:name="Copy_of_Log temp" doc:id="695adaf1-3b05-4dfc-8aca-f2277d66cdc1" message="patient temp=#[output application/json --- vars.temp]" />
 		<ee:transform doc:name="Extract patient data" doc:id="227c6587-1a7b-494e-8c6c-8d003e6a6702" >
 			<ee:message >
 			</ee:message>
@@ -152,7 +189,6 @@ output application/java
 	id : vars.myInput.slotId
 }]]]></http:uri-params>
 		</http:request>
-		<logger level="INFO" doc:name="Copy_of_Log temp" doc:id="96f9a1de-8642-448b-835b-1ef7f843d8b3" message="slot temp=#[output application/json --- vars.temp]" />
 		<ee:transform doc:name="Extract slot data" doc:id="a62d4f08-069f-4640-92ea-3a902d1aa97e" >
 			<ee:message >
 			</ee:message>
@@ -172,8 +208,14 @@ output application/java
 			</ee:variables>
 		</ee:transform>
 	</sub-flow>
+	<sub-flow name="validationFlow" doc:id="87299db2-aae9-4269-bf8d-d5f21db24a72" >
+		<validation:is-not-null doc:name="Slot is not null" doc:id="0f26933c-5bbb-416e-9bf8-6164fc9cf224" config-ref="Validation_Config" value="#[vars.slot]" message="Slot was not found" />
+		<validation:is-not-null doc:name="Practitioner is not null" doc:id="9041c08a-6b02-4062-ba5b-8d60b36be009" config-ref="Validation_Config" value="#[vars.practitioner]" message="Practitioner was not found" />
+		<validation:is-not-null doc:name="Patient is not null" doc:id="5e6f8a51-5f3d-4ad6-9d93-c2d843eb51ea" config-ref="Validation_Config" value="#[vars.patient]" message="Patient was not found" />
+		<validation:is-true doc:name="Slot is free" doc:id="06dc477c-27b3-48c7-b284-82782cc74a5e" config-ref="Validation_Config" expression='#[vars.slot.status=="free"]' message="Slot is not marked as available" />
+		<validation:is-true doc:name="Slot is in the future" doc:id="901cbf2a-6429-463b-9df4-f130c8aedea0" config-ref="Validation_Config" expression="#[vars.slot.start as DateTime &gt; now()]" message="Cannot book an appointment in the past" />
+	</sub-flow>
 	<flow name="getSlotsFlow" doc:id="bccb5b94-7696-4ebc-bf2d-2a7d25f7c2b5">
-		<logger level="INFO" doc:name="Logger" doc:id="4c7f789d-54c2-4def-8b6b-bfc0fcf251f1" message="getSlotsFlow payload=#[payload]" />
 		<http:request method="GET" doc:name="GET Schedule for Practitioner" doc:id="3522ea08-634e-4bcc-9b41-3d7a5dfcfd91" path="/Practitioner/{id}/Schedule" config-ref="HTTP_ehr_system_request_configuration">
 			<http:uri-params ><![CDATA[#[output applicaton/java
 ---
@@ -181,7 +223,6 @@ output application/java
 	id : vars.input.practitionerId
 }]]]></http:uri-params>
 		</http:request>
-		<logger level="INFO" doc:name="Logger" doc:id="470eadef-3c12-4a5d-94d5-4f79bf9f9fe9" message="payload=#[payload]"/>
 		<ee:transform doc:name="Extract scheduleId" doc:id="b9075012-8951-4f2c-bbc1-76044dba3e6e" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
@@ -211,7 +252,6 @@ if(payload.total>0)
 map $.resource  else []]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-				<logger level="INFO" doc:name="Logger" doc:id="a35e7a0e-bda4-4875-89de-f0acda8b64c3" message="retVal=#[payload]"/>
 			</when>
 			<otherwise>
 				<ee:transform doc:name="Practitioner not found" doc:id="a01f628a-0259-471e-8a58-8a8f5bc73a14">
