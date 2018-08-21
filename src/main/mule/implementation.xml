@@ -7,13 +7,21 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
 	<flow name="getAppointmentsFlow" doc:id="76c8ff43-acf4-4e5e-8140-0cd5c85efc97" >
+		<logger level="INFO" doc:name="Logger" doc:id="afd4095c-9f68-46b8-8421-9b7f0bf20692" />
 		<http:request method="GET" doc:name="GET Appointment" doc:id="73428683-0238-4dea-92f1-80ba610232c1" config-ref="HTTP_ehr_system_request_configuration" path="/Appointment">
 			<http:query-params ><![CDATA[#[output applicaton/java
 ---
 {
-	"patient" : #[attributes.queryParams.patientId!=null ? "Patient/" + attributes.queryParams.patientId : "" ],
-    "practitioner" : #[attributes.queryParams.practitionerId != null  ? "Patient/" + attributes.queryParams.practitionerId : "" ]
+	"patient" : if (attributes.queryParams.patientId == null)
+  ""
+else
+  ("Patient/" ++ attributes.queryParams.patientId),
+	"practitioner" : if (attributes.queryParams.practitionerId == null)
+  ""
+else
+  ("Practitionert/" ++ attributes.queryParams.practitionerId)
 }]]]></http:query-params>
+
 		</http:request>
 		<ee:transform doc:name="Process appointment data" doc:id="925e5738-8b05-4f09-b1db-ce301036e934">
 			<ee:message>
@@ -24,8 +32,8 @@ if (payload.total > 0)
 payload.entry.resource map 
 {
 	id: $.id as Number,
-	startDateTime: $.start,
-	endDateTime: $.end,
+	start: $.start,
+	end: $.end,
 	status: $.status,
 	practitioner: using (practitioner = ($.participant filter ($.actor.reference startsWith "Practitioner"))[0])
 	{
@@ -47,7 +55,7 @@ payload.entry.resource map
 output application/java
 ---
 if ( (not (isEmpty(payload))) and attributes.queryParams.startAfter != null)
-payload filter ($.startDateTime as DateTime > attributes.queryParams.startAfter as DateTime) 
+payload filter ($.start as DateTime > attributes.queryParams.startAfter as DateTime) 
 else payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
@@ -57,7 +65,7 @@ else payload]]></ee:set-payload>
 output application/java
 ---
 if ( (not (isEmpty(payload))) and attributes.queryParams.startBefore != null)
-payload filter ($.startDateTime as DateTime < attributes.queryParams.startBefore as DateTime) 
+payload filter ($.start as DateTime < attributes.queryParams.startBefore as DateTime) 
 else payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
@@ -209,18 +217,20 @@ output application/java
 		</ee:transform>
 	</sub-flow>
 	<sub-flow name="validationFlow" doc:id="87299db2-aae9-4269-bf8d-d5f21db24a72" >
-		<validation:is-not-null doc:name="Slot is not null" doc:id="0f26933c-5bbb-416e-9bf8-6164fc9cf224" config-ref="Validation_Config" value="#[vars.slot]" message="Slot was not found" />
-		<validation:is-not-null doc:name="Practitioner is not null" doc:id="9041c08a-6b02-4062-ba5b-8d60b36be009" config-ref="Validation_Config" value="#[vars.practitioner]" message="Practitioner was not found" />
-		<validation:is-not-null doc:name="Patient is not null" doc:id="5e6f8a51-5f3d-4ad6-9d93-c2d843eb51ea" config-ref="Validation_Config" value="#[vars.patient]" message="Patient was not found" />
-		<validation:is-true doc:name="Slot is free" doc:id="06dc477c-27b3-48c7-b284-82782cc74a5e" config-ref="Validation_Config" expression='#[vars.slot.status=="free"]' message="Slot is not marked as available" />
-		<validation:is-true doc:name="Slot is in the future" doc:id="901cbf2a-6429-463b-9df4-f130c8aedea0" config-ref="Validation_Config" expression="#[vars.slot.start as DateTime &gt; now()]" message="Cannot book an appointment in the past" />
+		<validation:all doc:name="All" doc:id="993af79e-2fd9-4b9a-8aea-37db774c4f80" >
+			<validation:is-not-null doc:name="Patient is not null" doc:id="5e6f8a51-5f3d-4ad6-9d93-c2d843eb51ea" config-ref="Validation_Config" value="#[vars.patient]" message="Patient was not found" />
+			<validation:is-not-null doc:name="Slot is not null" doc:id="0f26933c-5bbb-416e-9bf8-6164fc9cf224" config-ref="Validation_Config" value="#[vars.slot]" message="Slot was not found" />
+			<validation:is-not-null doc:name="Practitioner is not null" doc:id="9041c08a-6b02-4062-ba5b-8d60b36be009" config-ref="Validation_Config" value="#[vars.practitioner]" message="Practitioner was not found" />
+			<validation:is-true doc:name="Slot is free" doc:id="06dc477c-27b3-48c7-b284-82782cc74a5e" config-ref="Validation_Config" expression='#[vars.slot.status=="free"]' message="Slot is not marked as available" />
+			<validation:is-true doc:name="Slot is in the future" doc:id="901cbf2a-6429-463b-9df4-f130c8aedea0" config-ref="Validation_Config" expression="#[vars.slot.start as DateTime &gt; now()]" message="Cannot book an appointment in the past" />
+		</validation:all>
 	</sub-flow>
 	<flow name="getSlotsFlow" doc:id="bccb5b94-7696-4ebc-bf2d-2a7d25f7c2b5">
 		<http:request method="GET" doc:name="GET Schedule for Practitioner" doc:id="3522ea08-634e-4bcc-9b41-3d7a5dfcfd91" path="/Practitioner/{id}/Schedule" config-ref="HTTP_ehr_system_request_configuration">
 			<http:uri-params ><![CDATA[#[output applicaton/java
 ---
 {
-	id : vars.input.practitionerId
+	id : attributes.queryParams.practitionerId
 }]]]></http:uri-params>
 		</http:request>
 		<ee:transform doc:name="Extract scheduleId" doc:id="b9075012-8951-4f2c-bbc1-76044dba3e6e" >
