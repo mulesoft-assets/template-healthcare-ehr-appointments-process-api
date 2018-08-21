@@ -96,8 +96,6 @@ In order to use this Mule Anypoint Template you need to configure properties (AP
 ### Application properties
 + http.port `8081`
 
-+ baseUri `http://localhost:8081/api`
-
 + ehr.host `ehr-system-api.cloudhub.io`
 + ehr.port `80`
 + ehr.basePath `/api`
