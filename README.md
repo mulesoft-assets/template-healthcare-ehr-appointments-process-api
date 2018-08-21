@@ -25,13 +25,13 @@ This template should serve as a foundation for implementing an API that manages 
 provided as part of the Healthcare Templates Solution. The API is defined using 
 [RAML 1.0](http://raml.org) and this implementation uses [APIkit](https://docs.mulesoft.com/anypoint-platform-for-apis/apikit-basic-anatomy#basic-anatomy). 
 EHR Appointments Process API triggers the underlying microservices defined in EHR FHIR System API in JSON 
-(FHIR specification [version 1.0.2 DSTU2](https://www.hl7.org/FHIR/DSTU2/index.html)).
+(FHIR specification [version 3.0.1 STU3](https://www.hl7.org/FHIR/index.html)).
 
 EHR Appointments Process API is part of the Healthcare Templates Solution and it is interconnected with EHR FHIR System API and Web Portal Experience API.
 
 # Considerations <a name="considerations"/>
-To run this Anypoint Template, there are certain preconditions that must be considered. **Failling to do so could lead to unexpected behavior of the template.**
-Use Anypoint Studio v6.1.0+ and Mule ESB 3.8.1+ to run this template.
+To run this Anypoint Template, there are certain preconditions that must be considered. **Failing to do so could lead to unexpected behavior of the template.**
+Use Anypoint Studio v7.1.0+ and Mule ESB 4.1.1+ to run this template.
 
 ## APIs security considerations <a name="apissecurityconsiderations"/>
 This Process API is meant to be deployed to CloudHub and managed using the API Platform Manager.
@@ -61,12 +61,10 @@ First thing to know if you are a newcomer to Mule is where to get the tools.
 ### Importing an Anypoint Template into Studio
 Anypoint Studio offers several ways to import a project into the workspace, for instance: 
 
-+ Anypoint Studio generated Deployable Archive (.zip)
-+ Anypoint Studio Project from External Location
-+ Maven-based Mule Project from pom.xml
-+ Mule ESB Configuration XML from External Location
++ Anypoint Studio Project from File System
++ Packaged mule application (.jar)
 
-You can find a detailed description on how to do so in this [Documentation Page](https://docs.mulesoft.com/anypoint-studio/v/6/importing-and-exporting-in-studio).
+You can find a detailed description on how to do so in this [Documentation Page](https://docs.mulesoft.com/anypoint-studio/v/7.2/).
 
 ### Running on Studio <a name="runonstudio"/>
 Once you have imported you Anypoint Template into Anypoint Studio you need to follow these steps to run it:
@@ -85,7 +83,7 @@ While [creating your application on CloudHub](http://www.mulesoft.org/documentat
 Follow other steps defined [here](#runonpremise) and once your app is all set and started, there is no need to do anything else.
 
 ### Deploying your Anypoint Template on CloudHub <a name="deployingyouranypointtemplateoncloudhub"/>
-Anypoint Studio provides you with really easy way to deploy your Template directly to CloudHub, for the specific steps to do so please check this [link](https://docs.mulesoft.com/mule-fundamentals/v/3.8/deploying-mule-applications#deploy-to-the-anypoint-platform)
+Anypoint Studio provides you with really easy way to deploy your Template directly to CloudHub, for the specific steps to do so please check this [link](https://docs.mulesoft.com/anypoint-studio/v/7.1/deploy-mule-application-task#deploy-to-the-anypoint-platform)
 
 ### Applying policies on CloudHub <a name="applyingpolicies"/>
 When a Mule application is deployed using the Mule API Gateway Runtime, the API Platform allows to dynamically apply different policies that can be used for securizing the application, among many other cases. More information can be found in [Anypoint Platform for APIs](https://docs.mulesoft.com/anypoint-platform-for-apis/applying-runtime-policies)
