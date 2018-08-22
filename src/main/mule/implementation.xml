@@ -12,24 +12,25 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 			<http:query-params ><![CDATA[#[output applicaton/java
 ---
 {
-	"patient" : if (attributes.queryParams.patientId == null)
-  ""
+	"patient" : if (attributes.queryParams.patientId != null)
+  attributes.queryParams.patientId
 else
-  ("Patient/" ++ attributes.queryParams.patientId),
-	"practitioner" : if (attributes.queryParams.practitionerId == null)
-  ""
+  "",
+	"practitioner" : if (attributes.queryParams.practitionerId != null)
+  attributes.queryParams.practitionerId
 else
-  ("Practitionert/" ++ attributes.queryParams.practitionerId)
+  ""
 }]]]></http:query-params>
 
 		</http:request>
+		<logger level="INFO" doc:name="Logger" doc:id="bf6911e0-f8a8-4bf7-b702-179517329d59" message="get appointments data=#[payload]"/>
 		<ee:transform doc:name="Process appointment data" doc:id="925e5738-8b05-4f09-b1db-ce301036e934">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
-output application/java
+output application/json
 ---
 if (payload.total > 0)
-payload.entry.resource map 
+payload.entry.resource map
 {
 	id: $.id as Number,
 	start: $.start,
@@ -38,7 +39,7 @@ payload.entry.resource map
 	practitioner: using (practitioner = ($.participant filter ($.actor.reference startsWith "Practitioner"))[0])
 	{
 		id: (practitioner.actor.reference splitBy "/")[-1] as Number,
-		name: practitioner.actor.display	
+		name: practitioner.actor.display
 	},
 	patient: using (patient = ($.participant filter ($.actor.reference startsWith "Patient"))[0])
 	{
@@ -52,23 +53,24 @@ payload.entry.resource map
 		<ee:transform doc:name="filter after" doc:id="3a9b3406-e7d3-47cc-b3f5-df51b1e475d5">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
-output application/java
+output application/json
 ---
 if ( (not (isEmpty(payload))) and attributes.queryParams.startAfter != null)
-payload filter ($.start as DateTime > attributes.queryParams.startAfter as DateTime) 
+payload filter ($.start as DateTime > attributes.queryParams.startAfter as DateTime)
 else payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<ee:transform doc:name="filter before" doc:id="8502162b-82da-423a-824f-566b362c77bb" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
+output application/json
 ---
 if ( (not (isEmpty(payload))) and attributes.queryParams.startBefore != null)
-payload filter ($.start as DateTime < attributes.queryParams.startBefore as DateTime) 
+payload filter ($.start as DateTime < attributes.queryParams.startBefore as DateTime)
 else payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="e11b5e47-0eb3-4534-8a79-39331f23b559" message="getAppointment retVal=#[payload]"/>
 	</flow>
 	<flow name="postAppointmentsFlow" doc:id="d39044e1-5253-4a6e-9ff0-5a9c16e878b8" >
 		<ee:transform doc:name="Save POST body to variable myInput" doc:id="bfc5b64e-56e0-4add-8102-82fdbfe50832">
@@ -144,7 +146,7 @@ output application/json
 ---
 {
 	id : vars.myInput.slotId
-}]]]></http:uri-params>        
+}]]]></http:uri-params>
         </http:request>
 	</flow>
 	<sub-flow name="retrieveAppointmentRelatedData" doc:id="6a97c38a-82db-4e81-bc3e-ec93c0afd020" >
@@ -258,7 +260,7 @@ if (payload.total > 0) {
 output application/json
 ---
 if(payload.total>0)
-(payload.entry filter (($.resource.status == "free") and ($.resource.start as DateTime) > now())) 
+(payload.entry filter (($.resource.status == "free") and ($.resource.start as DateTime) > now()))
 map $.resource  else []]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
