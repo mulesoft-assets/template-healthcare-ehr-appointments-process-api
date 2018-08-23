@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<flow name="getAppointmentsFlow" doc:id="76c8ff43-acf4-4e5e-8140-0cd5c85efc97" >
+		<set-variable value="#[attributes.queryParams]" doc:name="Set Variable" doc:id="a128c2b8-7a24-47c5-802a-39d1bfeea63d" variableName="params"/>
+		<http:request method="GET" doc:name="GET Appointment" doc:id="73428683-0238-4dea-92f1-80ba610232c1" config-ref="HTTP_ehr_system_request_configuration" path="/Appointment">
+			<http:query-params ><![CDATA[#[output applicaton/java
+---
+{
+	"patient" : if (attributes.queryParams.patientId != null)
+  attributes.queryParams.patientId
+else
+  "",
+	"practitioner" : if (attributes.queryParams.practitionerId != null)
+  attributes.queryParams.practitionerId
+else
+  ""
+}]]]></http:query-params>
+
+		</http:request>
+		<ee:transform doc:name="Process appointment data" doc:id="925e5738-8b05-4f09-b1db-ce301036e934">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if (payload.total > 0)
+payload.entry.resource map
+{
+	id: $.id as Number,
+	start: $.start,
+	end: $.end,
+	status: $.status,
+	practitioner: using (practitioner = ($.participant filter ($.actor.reference startsWith "Practitioner"))[0])
+	{
+		id: (practitioner.actor.reference splitBy "/")[-1] as Number,
+		name: practitioner.actor.display
+	},
+	patient: using (patient = ($.participant filter ($.actor.reference startsWith "Patient"))[0])
+	{
+		id: (patient.actor.reference splitBy "/")[-1] as Number,
+		name: patient.actor.display
+	},
+	description: $.description
+} else []]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="filter after" doc:id="3a9b3406-e7d3-47cc-b3f5-df51b1e475d5">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if ( (not (isEmpty(payload))) and vars.params.startAfter != null)
+payload filter ($.start as DateTime > (vars.params.startAfter replace " " with "+") as DateTime)
+else payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="filter before" doc:id="8502162b-82da-423a-824f-566b362c77bb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+if ( (not (isEmpty(payload))) and vars.params.startBefore != null)
+payload filter ($.start as DateTime < (vars.params.startBefore replace " " with "+") as DateTime)
+else payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="postAppointmentsFlow" doc:id="d39044e1-5253-4a6e-9ff0-5a9c16e878b8" >
+		<ee:transform doc:name="Save POST body to variable myInput" doc:id="bfc5b64e-56e0-4add-8102-82fdbfe50832">
+			<ee:message>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="myInput" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	patientId: payload.patientId,
+	practitionerId: payload.practitionerId,
+	slotId: payload.slotId
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Call retrieveAppointmentRelatedData" doc:id="49c1b13d-3327-4012-832f-28df386683a6" name="retrieveAppointmentRelatedData"/>
+		<flow-ref doc:name="Validate data" doc:id="7a7cd28d-7e32-4470-bc66-dcaaad63a8e5" name="validationFlow"/>
+		<ee:transform doc:name="Prepare request to create appointment" doc:id="62dd18d6-9e83-457e-b7ef-f583cbc5eb91" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "resourceType": "Appointment",
+    "status": "booked",
+    "description": "",
+    "start": vars.slot.start,
+    "end": vars.slot.end,
+    "slot": [{
+      "reference": "Slot/" ++ (vars.slot.id default "")
+    }],
+    "participant": [
+      {
+        "actor": {
+          "reference": "Patient/" ++ (vars.patient.id default ""),
+          "display": vars.patient.name
+        },
+        "required": "required",
+        "status": "needs-action"
+      },
+      {
+        "actor": {
+          "reference": "Practitioner/" ++ (vars.practitioner.id default ""),
+          "display": vars.practitioner.name
+        },
+        "required": "required",
+        "status": "needs-action"
+      }
+    ]
+  }]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="POST Appointment" doc:id="12a1ac85-de7c-48eb-a25a-348b32a7cf50" config-ref="HTTP_ehr_system_request_configuration" path="/Appointment"/>
+		<ee:transform doc:name="Prepare slot update request" doc:id="81f39412-b6a7-4eef-bff1-30c6b282ab8f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "resourceType": "Slot",
+    "schedule": {
+        "reference": vars.slot.schedule.reference
+    },
+    "start": vars.slot.start,
+    "end": vars.slot.end,
+    "status": "busy"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="PUT" doc:name="PUT Slot" doc:id="57d3605b-9051-4990-b853-345acf5d24f5" config-ref="HTTP_ehr_system_request_configuration" path="/Slot/{id}">
+            <http:uri-params ><![CDATA[#[output applicaton/java
+---
+{
+	id : vars.myInput.slotId
+}]]]></http:uri-params>
+        </http:request>
+	</flow>
+	<sub-flow name="retrieveAppointmentRelatedData" doc:id="6a97c38a-82db-4e81-bc3e-ec93c0afd020" >
+		<http:request method="GET" doc:name="GET Practitioner" doc:id="1b9fffe1-354e-4df6-afcd-bf26fde23606" config-ref="HTTP_ehr_system_request_configuration" path="/Practitioner/{id}" target="temp">
+           <http:uri-params ><![CDATA[#[output applicaton/java
+---
+{
+	id : vars.myInput.practitionerId
+}]]]></http:uri-params>
+        </http:request>
+		<ee:transform doc:name="Extract practitioner data" doc:id="7e87a016-6e90-4ff1-b6d3-99aba0a94508" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="practitioner" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	id : vars.temp.id,
+	name: (vars.temp.name[0].given[0] default "") ++ " " ++ (vars.temp.name[0].family[0] default "") ++ " " ++ (vars.temp.name[0].suffix[0] default null)
+}
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="GET" doc:name="GET Patient" doc:id="dafd8e04-dfd1-4df6-ac9d-a4590656021e" config-ref="HTTP_ehr_system_request_configuration" path="/Patient/{id}" target="temp">
+                   <http:uri-params ><![CDATA[#[output applicaton/java
+---
+{
+	id : vars.myInput.patientId
+}]]]></http:uri-params>
+        </http:request>
+		<ee:transform doc:name="Extract patient data" doc:id="227c6587-1a7b-494e-8c6c-8d003e6a6702" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="patient" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	id : vars.temp.id,
+	name: (vars.temp.name[0].given[0] default "") ++ " " ++ (vars.temp.name[0].family[0] default "")
+}
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="GET" doc:name="GET Slot" doc:id="957480ea-0962-4a12-bc16-ecd1e67114db" config-ref="HTTP_ehr_system_request_configuration" path="/Slot/{id}" target="temp" >
+			<http:uri-params ><![CDATA[#[output applicaton/java
+---
+{
+	id : vars.myInput.slotId
+}]]]></http:uri-params>
+		</http:request>
+		<ee:transform doc:name="Extract slot data" doc:id="a62d4f08-069f-4640-92ea-3a902d1aa97e" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="slot" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+    "id": vars.temp.id,
+    "schedule": {
+        "reference": vars.temp.schedule.reference
+    },
+    "start": vars.temp.start,
+    "end": vars.temp.end,
+    "status": vars.temp.status
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="validationFlow" doc:id="87299db2-aae9-4269-bf8d-d5f21db24a72" >
+		<validation:all doc:name="All" doc:id="993af79e-2fd9-4b9a-8aea-37db774c4f80" >
+			<validation:is-not-null doc:name="Patient is not null" doc:id="5e6f8a51-5f3d-4ad6-9d93-c2d843eb51ea" config-ref="Validation_Config" value="#[vars.patient]" message="Patient was not found" />
+			<validation:is-not-null doc:name="Slot is not null" doc:id="0f26933c-5bbb-416e-9bf8-6164fc9cf224" config-ref="Validation_Config" value="#[vars.slot]" message="Slot was not found" />
+			<validation:is-not-null doc:name="Practitioner is not null" doc:id="9041c08a-6b02-4062-ba5b-8d60b36be009" config-ref="Validation_Config" value="#[vars.practitioner]" message="Practitioner was not found" />
+			<validation:is-true doc:name="Slot is free" doc:id="06dc477c-27b3-48c7-b284-82782cc74a5e" config-ref="Validation_Config" expression='#[vars.slot.status=="free"]' message="Slot is not marked as available" />
+			<validation:is-true doc:name="Slot is in the future" doc:id="901cbf2a-6429-463b-9df4-f130c8aedea0" config-ref="Validation_Config" expression="#[vars.slot.start as DateTime &gt; now()]" message="Cannot book an appointment in the past" />
+		</validation:all>
+	</sub-flow>
+	<flow name="getSlotsFlow" doc:id="bccb5b94-7696-4ebc-bf2d-2a7d25f7c2b5">
+		<http:request method="GET" doc:name="GET Schedule for Practitioner" doc:id="3522ea08-634e-4bcc-9b41-3d7a5dfcfd91" path="/Practitioner/{id}/Schedule" config-ref="HTTP_ehr_system_request_configuration">
+			<http:uri-params ><![CDATA[#[output applicaton/java
+---
+{
+	id : attributes.queryParams.practitionerId
+}]]]></http:uri-params>
+		</http:request>
+		<ee:transform doc:name="Extract scheduleId" doc:id="b9075012-8951-4f2c-bbc1-76044dba3e6e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+if (payload.total > 0) {
+	scheduleId: payload.entry.resource[0].id
+}  else null]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Does schedule / practitioner exists?" doc:id="2a322e5a-fac8-4122-98b0-3a0e5605ee63" >
+			<when expression="#[payload != null]" >
+				<http:request method="GET" doc:name="GET Slots for given schedule" doc:id="6ff4b86b-a2d8-4e3d-99b2-6621d1407574" config-ref="HTTP_ehr_system_request_configuration" path="/Slot">
+					<http:query-params ><![CDATA[#[output applicaton/java
+---
+{
+	"schedule" : "Schedule/" ++ payload.scheduleId
+}]]]></http:query-params>
+				</http:request>
+				<ee:transform doc:name="To list of slots" doc:id="900b1482-e9f8-489b-b77e-af7bf0b13ce7" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+if(payload.total>0)
+(payload.entry filter (($.resource.status == "free") and ($.resource.start as DateTime) > now()))
+map $.resource  else []]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Practitioner not found" doc:id="a01f628a-0259-471e-8a58-8a8f5bc73a14">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Practitioner not found"
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+404]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>
