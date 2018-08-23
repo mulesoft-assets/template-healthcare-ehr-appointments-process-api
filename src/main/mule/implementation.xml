@@ -7,7 +7,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
 	<flow name="getAppointmentsFlow" doc:id="76c8ff43-acf4-4e5e-8140-0cd5c85efc97" >
-		<logger level="INFO" doc:name="Logger" doc:id="afd4095c-9f68-46b8-8421-9b7f0bf20692" />
+		<set-variable value="#[attributes.queryParams]" doc:name="Set Variable" doc:id="a128c2b8-7a24-47c5-802a-39d1bfeea63d" variableName="params"/>
 		<http:request method="GET" doc:name="GET Appointment" doc:id="73428683-0238-4dea-92f1-80ba610232c1" config-ref="HTTP_ehr_system_request_configuration" path="/Appointment">
 			<http:query-params ><![CDATA[#[output applicaton/java
 ---
@@ -23,7 +23,6 @@ else
 }]]]></http:query-params>
 
 		</http:request>
-		<logger level="INFO" doc:name="Logger" doc:id="bf6911e0-f8a8-4bf7-b702-179517329d59" message="get appointments data=#[payload]"/>
 		<ee:transform doc:name="Process appointment data" doc:id="925e5738-8b05-4f09-b1db-ce301036e934">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
@@ -55,8 +54,8 @@ payload.entry.resource map
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-if ( (not (isEmpty(payload))) and attributes.queryParams.startAfter != null)
-payload filter ($.start as DateTime > attributes.queryParams.startAfter as DateTime)
+if ( (not (isEmpty(payload))) and vars.params.startAfter != null)
+payload filter ($.start as DateTime > (vars.params.startAfter replace " " with "+") as DateTime)
 else payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
@@ -65,12 +64,11 @@ else payload]]></ee:set-payload>
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
-if ( (not (isEmpty(payload))) and attributes.queryParams.startBefore != null)
-payload filter ($.start as DateTime < attributes.queryParams.startBefore as DateTime)
+if ( (not (isEmpty(payload))) and vars.params.startBefore != null)
+payload filter ($.start as DateTime < (vars.params.startBefore replace " " with "+") as DateTime)
 else payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="Logger" doc:id="e11b5e47-0eb3-4534-8a79-39331f23b559" message="getAppointment retVal=#[payload]"/>
 	</flow>
 	<flow name="postAppointmentsFlow" doc:id="d39044e1-5253-4a6e-9ff0-5a9c16e878b8" >
 		<ee:transform doc:name="Save POST body to variable myInput" doc:id="bfc5b64e-56e0-4add-8102-82fdbfe50832">
