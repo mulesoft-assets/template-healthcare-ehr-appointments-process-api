@@ -3,8 +3,8 @@ title: Healthcare EHR Appointments Process API
 version: v2
 
 types: 
-  Appointment: !include exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.healthcare/appointment/1.0.2/appointment.raml
-  Slot: !include /exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.healthcare/slot/1.0.2/slot.raml
+  Appointment: !include exchange_modules/a06c5779-bccc-4b0e-b90b-96933206e3c1/appointment/1.0.0/appointment.raml
+  Slot: !include /exchange_modules/a06c5779-bccc-4b0e-b90b-96933206e3c1/slot/1.0.0/slot.raml
   AppointmentBooking:
     type: object
     properties:
@@ -14,6 +14,7 @@ types:
 
 /slots:
   get:
+    displayName: Retrieve slots
     queryParameters:
       practitionerId:
         type: integer
@@ -23,10 +24,11 @@ types:
         body:
           application/json:
             type: Slot[]
-            example: !include examples/response/get_slot.json
+            example: !include /examples/response/get_slot.json
 
 /appointments:
   get:
+    displayName: Retrieve appointments
     queryParameters:
       practitionerId:
         type: integer
@@ -48,6 +50,7 @@ types:
             example: !include examples/response/get_appointment.json
             
   post:
+    displayName: Create appointment
     body:
       application/json:
         type: AppointmentBooking
