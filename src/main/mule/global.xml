@@ -27,6 +27,5 @@
 
 	<validation:config name="Validation_Config" doc:name="Validation Config"
 		doc:id="cff8215e-abf3-463b-917b-5a93b55e7671" />
-	<global-property doc:name="Global Property" doc:id="687f8a07-3a56-4d76-bfef-f1f5a32365be" name="mule.env" value="dev" />
     
 </mule>
