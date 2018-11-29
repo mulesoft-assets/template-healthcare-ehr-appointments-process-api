@@ -7,6 +7,7 @@
 	xsi:schemaLocation="
     http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
 
+	<global-property doc:name="Global Property" doc:id="40f33ac6-57e9-4369-a49f-a5a8e729cb55" name="mule.env" value="dev" />
 	<http:listener-config
 		name="healthcare_appointment_process_api-httpListenerConfig">
 		<http:listener-connection host="0.0.0.0"
