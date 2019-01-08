@@ -1,102 +1,85 @@
-# Template Healthcare EHR Appointmetns Process API
+# Template Healthcare EHR Appointments Process API
 
-+ [License Agreement](#licenseagreement)
-+ [Use Case](#usecase)
-+ [Considerations](#considerations)
-	* [Cloudhub security considerations](#cloudhubsecurityconsiderations)
-	* [APIs security considerations](#apissecurityconsiderations)
-+ [Run it!](#runit)
-	* [Running on premise](#runonopremise)
-	* [Running on Studio](#runonstudio)
-	* [Running on Mule ESB stand alone](#runonmuleesbstandalone)
-	* [Running on CloudHub](#runoncloudhub)
-	* [Deploying your Anypoint Template on CloudHub](#deployingyouranypointtemplateoncloudhub)
-	* [Creating externally reachable proxy and applying policies](#proxy)
-	* [Properties to be configured (With examples)](#propertiestobeconfigured)
+Appointment scheduling is one of the most popular, yet most complex use cases in healthcare. It requires an orchestration logic that retrieves and updates multiple resources to schedule a new appointment. This template provides an API implementation best practice to abstract that complexity with a light-weight RESTful interface that can be reused in other integrations projects such as building a mobile app for appointment scheduling. 
 
-# License Agreement <a name="licenseagreement"/>
-Note that using this template is subject to the conditions of this [License Agreement](AnypointTemplateLicense.pdf).
-Please review the terms of the license before downloading and using this template. In short, you are allowed to use the template for free with Mule ESB Enterprise Edition, CloudHub, or as a trial in Anypoint Studio.
+![](https://www.lucidchart.com/publicSegments/view/6c0eab9d-b684-43bd-96c5-61b323fd6399/image.png)
 
-# Use Case <a name="usecase"/>
+## Catalyst Accelerator for Healthcare
+This API implementation is one of many components included in [Catalyst Accelerator for Healthcare](/exchange/68ef9520-24e9-4cf2-b2f5-620025690913/catalyst-accelerator-for-healthcare/). It provides organizations with connectivity assets that accelerate project delivery in healthcare, including pre-built API designs and implementations that support core healthcare business processes. Contact [info@mulesoft.com](mailto:info@mulesoft.com) for more information.
+
+# License Agreement
+Using this template is subject to the conditions of this <a href="https://github.com/mulesoft/template-sfdc2nets-opportunity-aggregation/blob/4.1/AnypointTemplateLicense.pdf">License Agreement</a>. Review the terms of the license before downloading and using this template. In short, you are allowed to use the template for free with Mule Enterprise Edition, CloudHub, or as a trial in Anypoint Studio.
+
+# Use Case
 As a Healthcare Clinic Portal user I want a service to manage Appointment data from in EHR system.
 
-This template should serve as a foundation for implementing an API that manages Appointments in the EHR FHIR System API and it is 
-provided as part of the Healthcare Templates Solution. The API is defined using 
+This template should serve as a foundation for implementing an API that manages Appointments in the EHR FHIR System API and it is provided as part of the Healthcare Templates Solution. The API is defined using 
 [RAML 1.0](http://raml.org) and this implementation uses [APIkit](https://docs.mulesoft.com/anypoint-platform-for-apis/apikit-basic-anatomy#basic-anatomy). 
 EHR Appointments Process API triggers the underlying microservices defined in EHR FHIR System API in JSON 
 (FHIR specification [version 3.0.1 STU3](https://www.hl7.org/FHIR/index.html)).
 
 EHR Appointments Process API is part of the Healthcare Templates Solution and it is interconnected with EHR FHIR System API and Web Portal Experience API.
 
-# Considerations <a name="considerations"/>
-To run this Anypoint Template, there are certain preconditions that must be considered. **Failing to do so could lead to unexpected behavior of the template.**
-Use Anypoint Studio v7.1.0+ and Mule ESB 4.1.1+ to run this template.
+# Considerations
+To run this template, there are certain preconditions that must be considered. Failing to do so could lead to unexpected behavior of the template. 
 
-## APIs security considerations <a name="apissecurityconsiderations"/>
-This Process API is meant to be deployed to CloudHub and managed using the API Platform Manager.
-
-### Exposing external endpoints with HTTP
-+ It is triggered by Web Portal Experience API using HTTP
-
-### Exposing internal endpoints with RAML and HTTP
-+ It is also interconnected internally with EHR FHIR System API, which are deployed on a CloudHub.
+- **Compatibiliy:** - Use Anypoint Studio v7.1.0+ and Mule Runtime 4.1.1+ to run this template.
+- **API Security:** - Deploy to CloudHub and manage using the API Platform Manager.
+- **Expose External Endpoints with HTTP:** - Trigger with the Web Portal Experience API using HTTP.
+- **Expose Internal Endpoints with RAML and HTTP:** - Interconnect internally with the EHR FHIR System API, which is deployed on a CloudHub.
 
 
-### Running the application
+### Run the Application
 
-# Run it! <a name="runit"/>
+# Run it!
 Simple steps to get Healthcare EHR Appointments Process API running.
 See below.
 
-## Running on premise <a name="runonopremise"/>
+## Run On-Premises
 In this section we detail the way you should run your Anypoint Template on your computer.
 
-### Where to Download Anypoint Studio and Mule ESB
+### Where to Download Anypoint Studio and Mule Runtime
 First thing to know if you are a newcomer to Mule is where to get the tools.
 
 + You can download Anypoint Studio from this [Location](http://www.mulesoft.com/platform/studio)
 + You can download Mule ESB from this [Location](http://www.mulesoft.com/platform/soa/mule-esb-open-source-esb)
 
-### Importing an Anypoint Template into Studio
-Anypoint Studio offers several ways to import a project into the workspace, for instance: 
+### Import Template in Studio
+In Studio, click the Exchange X icon in the upper left of the taskbar, log in with your
+Anypoint Platform credentials, search for the template, and click **Open**.
 
-+ Anypoint Studio Project from File System
-+ Packaged mule application (.jar)
+### Run in Studio>
+After opening your template in Anypoint Studio, follow these steps to run it:
 
-You can find a detailed description on how to do so in this [Documentation Page](https://docs.mulesoft.com/anypoint-studio/v/7.2/).
+1. Locate the properties file `mule.dev.properties`, in src/main/resources
+2. Complete all the properties required as per the examples in the section "Properties to Configure".
+3. Right click your template project folder.
+4. Hover your mouse over `Run as`.
+5. Click `Mule Application (configure)`.
+6. Inside the dialog, select Environment and set the variable `mule.env` to the value `dev`.
+7. Click `Run`.
 
-### Running on Studio <a name="runonstudio"/>
-Once you have imported you Anypoint Template into Anypoint Studio you need to follow these steps to run it:
+### Run in Mule Runtime
+Fill in all the properties in one of the property files, for example in mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, use `mule.env=prod`.
 
-+ Locate the properties file `mule.dev.properties`, in src/main/resources
-+ Complete all the properties required as per the examples in the section [Properties to be configured](#propertiestobeconfigured)
-+ Once that is done, right click on you Anypoint Template project folder 
-+ Hover you mouse over `"Run as"`
-+ Click on  `"Mule Application"`
+## Run in CloudHub
+While creating your application on CloudHub, you need to go to Manage Application > Properties to set all environment variables detailed in "Properties to Configure".
 
-### Running on Mule ESB stand alone <a name="runonmuleesbstandalone"/>
-Fill in all the properties in one of the property files, for example in [mule.prod.properties](../master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`.
+### Deploy in CloudHub
 
-## Running on CloudHub <a name="runoncloudhub"/>
-While [creating your application on CloudHub](http://www.mulesoft.org/documentation/display/current/Hello+World+on+CloudHub) (Or you can do it later as a next step), you need to go to `"Manage Application"` > `"Properties"` to set all environment variables detailed in **Properties to be configured**.
-Follow other steps defined [here](#runonpremise) and once your app is all set and started, there is no need to do anything else.
+In Studio, right click your project name in Package Explorer and select Anypoint Platform > Deploy on CloudHub.
 
-### Deploying your Anypoint Template on CloudHub <a name="deployingyouranypointtemplateoncloudhub"/>
-Anypoint Studio provides you with really easy way to deploy your Template directly to CloudHub, for the specific steps to do so please check this [link](https://docs.mulesoft.com/anypoint-studio/v/7.1/deploy-mule-application-task#deploy-to-the-anypoint-platform)
+### Applying Policies in CloudHub
 
-### Applying policies on CloudHub <a name="applyingpolicies"/>
-When a Mule application is deployed using the Mule API Gateway Runtime, the API Platform allows to dynamically apply different policies that can be used for securizing the application, among many other cases. More information can be found in [Anypoint Platform for APIs](https://docs.mulesoft.com/anypoint-platform-for-apis/applying-runtime-policies)
+When a Mule application is deployed using the Mule Runtime, the API Platform allows you to dynamically apply different policies that can be used for securizing the application, among many other cases. More information can be found in [Policies for Mule 4](https://docs.mulesoft.com/api-manager/2.x/policies-mule4).
 
-## Properties to be configured (With examples) <a name="propertiestobeconfigured"/>
-In order to use this Mule Anypoint Template you need to configure properties (APIs, Credentials, API Autodiscovery, etc.) either in properties file or in CloudHub as Environment Variables. Detail list with examples:
-### Application properties
+## Properties to Configure
+To use this template you need to configure properties (APIs, Credentials, API Autodiscovery, etc.) either in properties file or in CloudHub as Environment Variables. Detail list with examples:
 
+### Application Properties
 
-### Application properties
-+ http.port `8081`
-
-+ ehr.host `ehr-system-api.cloudhub.io`
-+ ehr.port `80`
-+ ehr.basePath `/api`
+- http.port `8081`
+- ehr.host `ehr-system-api.cloudhub.io`
+- ehr.port `80`
+- ehr.basePath `/api`
 
