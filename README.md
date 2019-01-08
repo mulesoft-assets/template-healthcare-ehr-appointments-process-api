@@ -38,11 +38,12 @@ See below.
 ## Run On-Premises
 In this section we detail the way you should run your Anypoint Template on your computer.
 
-### Where to Download Anypoint Studio and Mule Runtime
-First thing to know if you are a newcomer to Mule is where to get the tools.
+### Where to Download Anypoint Studio and the Mule Runtime
 
-+ You can download Anypoint Studio from this [Location](http://www.mulesoft.com/platform/studio)
-+ You can download Mule ESB from this [Location](http://www.mulesoft.com/platform/soa/mule-esb-open-source-esb)
+If you are new to Mule, download this software:
+
+- [Download Anypoint Studio](https://www.mulesoft.com/platform/studio)
+- [Download Mule runtime](https://www.mulesoft.com/lp/dl/mule-esb-enterprise)
 
 ### Import Template in Studio
 In Studio, click the Exchange X icon in the upper left of the taskbar, log in with your
@@ -71,7 +72,7 @@ In Studio, right click your project name in Package Explorer and select Anypoint
 
 ### Applying Policies in CloudHub
 
-When a Mule application is deployed using the Mule Runtime, the API Platform allows you to dynamically apply different policies that can be used for securizing the application, among many other cases. More information can be found in [Policies for Mule 4](https://docs.mulesoft.com/api-manager/2.x/policies-mule4).
+When a Mule application is deployed using the Mule Runtime, the API Platform allows you to dynamically apply different policies that can be used for securing the application, among many other cases. More information can be found in [Policies for Mule 4](https://docs.mulesoft.com/api-manager/2.x/policies-mule4).
 
 ## Properties to Configure
 To use this template you need to configure properties (APIs, Credentials, API Autodiscovery, etc.) either in properties file or in CloudHub as Environment Variables. Detail list with examples:
