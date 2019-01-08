@@ -49,7 +49,7 @@ If you are new to Mule, download this software:
 In Studio, click the Exchange X icon in the upper left of the taskbar, log in with your
 Anypoint Platform credentials, search for the template, and click **Open**.
 
-### Run in Studio>
+### Run in Studio
 After opening your template in Anypoint Studio, follow these steps to run it:
 
 1. Locate the properties file `mule.dev.properties`, in src/main/resources
