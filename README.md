@@ -28,9 +28,6 @@ To run this template, there are certain preconditions that must be considered. F
 - **Expose External Endpoints with HTTP:** Trigger with the Web Portal Experience API using HTTP.
 - **Expose Internal Endpoints with RAML and HTTP:** Interconnect internally with the EHR FHIR System API, which is deployed on a CloudHub.
 
-
-### Run the Application
-
 # Run it!
 Simple steps to get Healthcare EHR Appointments Process API running.
 See below.
