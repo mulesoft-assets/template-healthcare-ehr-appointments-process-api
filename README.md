@@ -23,10 +23,10 @@ EHR Appointments Process API is part of the Healthcare Templates Solution and it
 # Considerations
 To run this template, there are certain preconditions that must be considered. Failing to do so could lead to unexpected behavior of the template. 
 
-- **Compatibiliy:** - Use Anypoint Studio v7.1.0+ and Mule Runtime 4.1.1+ to run this template.
-- **API Security:** - Deploy to CloudHub and manage using the API Platform Manager.
-- **Expose External Endpoints with HTTP:** - Trigger with the Web Portal Experience API using HTTP.
-- **Expose Internal Endpoints with RAML and HTTP:** - Interconnect internally with the EHR FHIR System API, which is deployed on a CloudHub.
+- **Compatibiliy:** Use Anypoint Studio v7.1.0+ and Mule Runtime 4.1.1+ to run this template.
+- **API Security:** Deploy to CloudHub and manage using the API Platform Manager.
+- **Expose External Endpoints with HTTP:** Trigger with the Web Portal Experience API using HTTP.
+- **Expose Internal Endpoints with RAML and HTTP:** Interconnect internally with the EHR FHIR System API, which is deployed on a CloudHub.
 
 
 ### Run the Application
