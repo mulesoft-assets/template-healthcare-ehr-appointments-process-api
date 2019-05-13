@@ -1,14 +1,14 @@
 # Template Healthcare EHR Appointments Process API
 
-Appointment scheduling is one of the most popular, yet most complex use cases in healthcare. It requires an orchestration logic that retrieves and updates multiple resources to schedule a new appointment. This template provides an API implementation best practice to abstract that complexity with a light-weight RESTful interface that can be reused in other integrations projects such as building a mobile app for appointment scheduling. 
+Appointment scheduling is one of the most popular, yet most complex use cases in healthcare. Appointment scheduling requires an orchestration logic that retrieves and updates multiple resources to schedule a new appointment. This template provides an API implementation best practice to abstract that complexity with a light-weight RESTful interface that can be reused in other integrations projects such as building a mobile app for appointment scheduling. 
 
 ![](https://www.lucidchart.com/publicSegments/view/6c0eab9d-b684-43bd-96c5-61b323fd6399/image.png)
 
-## Catalyst Accelerator for Healthcare
-This API implementation is one of many components included in [Catalyst Accelerator for Healthcare](/exchange/68ef9520-24e9-4cf2-b2f5-620025690913/catalyst-accelerator-for-healthcare/). It provides organizations with connectivity assets that accelerate project delivery in healthcare, including pre-built API designs and implementations that support core healthcare business processes.
+## Accelerator for Healthcare
+This API implementation is one of many components included in [Accelerator for Healthcare](/exchange/68ef9520-24e9-4cf2-b2f5-620025690913/catalyst-accelerator-for-healthcare/). This API provides organizations with connectivity assets that accelerate project delivery in healthcare, including pre-built API designs and implementations that support core healthcare business processes.
 
 # License Agreement
-Using this template is subject to the conditions of this <a href="https://github.com/mulesoft/template-sfdc2nets-opportunity-aggregation/blob/4.1/AnypointTemplateLicense.pdf">License Agreement</a>. Review the terms of the license before downloading and using this template. In short, you are allowed to use the template for free with Mule Enterprise Edition, CloudHub, or as a trial in Anypoint Studio.
+Using this template is subject to the conditions of this <a href="https://s3.amazonaws.com/templates-examples/AnypointTemplateLicense.pdf">MuleSoft License Agreement</a>. Review the terms of the license before downloading and using this template. In short, you are allowed to use the template for free with Mule Enterprise Edition, CloudHub, or as a trial in Anypoint Studio.
 
 # Use Case
 As a Healthcare Clinic Portal user I want a service to manage Appointment data from in EHR system.
@@ -49,7 +49,7 @@ Anypoint Platform credentials, search for the template, and click **Open**.
 ### Run in Studio
 After opening your template in Anypoint Studio, follow these steps to run it:
 
-1. Locate the properties file `mule.dev.properties`, in src/main/resources
+1. Locate the properties file `mule.dev.properties`, in src/main/resources.
 2. Complete all the properties required as per the examples in the section "Properties to Configure".
 3. Right click your template project folder.
 4. Hover your mouse over `Run as`.
